@@ -22,6 +22,9 @@
 // enables the use of the PVRShell module which provides an abstract mechanism for the native platform primarily used for handling window creation and input handling.
 #include "PVRShell/PVRShell.h"
 
+// STL C++ headers
+#include<map> 
+
 // conditionally include dlfcn.h when the X11 XCB window system is to be used by the application. dlfcn.h is required for dynamically opening the xcb library using dlopen and
 // closing it using dlclose.
 #ifdef VK_USE_PLATFORM_XCB_KHR
@@ -271,6 +274,7 @@ std::vector<std::string> filterExtensions(const std::vector<VkExtensionPropertie
 	}
 	return outExtensions;
 }
+
 
 /// <summary>Filters a list of VkLayerProperties supported by a particular device based on a set of application chosen layers to be used in this demo.</summary>
 /// <param name="layerProperties">A list of VkLayerProperties supported by a particular device which will be used as the base for filtering.</param>
@@ -1303,6 +1307,7 @@ void VulkanIntroducingPVRShell::initDebugCallbacks()
 	}
 }
 
+#define TP() Log(LogLevel::Information, "line: %d", __LINE__) 
 /// <summary>Retrieve the physical devices from the list of available physical devices of the instance.</summary>
 void VulkanIntroducingPVRShell::retrievePhysicalDevices()
 {
@@ -1317,11 +1322,30 @@ void VulkanIntroducingPVRShell::retrievePhysicalDevices()
 	// The number of physical devices must be larger than or equal to 1 in this demo.
 	if (physicalDeviceCount == 0) { throw pvr::PvrError("Physical Device Count must be 1 or greater"); }
 
-	VkPhysicalDevice physicalDevices[16];
+	//VkPhysicalDevice physicalDevices[16];
+	std::vector<VkPhysicalDevice> physicalDevices;
+	std::map<VkPhysicalDevice, VkPhysicalDeviceProperties> physicalDeviceProperties;
+	std::map<VkPhysicalDevice, VkPhysicalDeviceFeatures> physicalDeviceFeatures;
+
+	physicalDevices.resize(physicalDeviceCount);
 
 	// Retrieves physicalDeviceCount physical devices which corresponds to the number of elements in the pPhysicalDevices array.
-	vulkanSuccessOrDie(_instanceVkFunctions.vkEnumeratePhysicalDevices(_instance, &physicalDeviceCount, physicalDevices), "Failed to enumerate the physical devices");
+	vulkanSuccessOrDie(_instanceVkFunctions.vkEnumeratePhysicalDevices(_instance, &physicalDeviceCount, physicalDevices.data()), "Failed to enumerate the physical devices");
 	_physicalDevice = VK_NULL_HANDLE;
+
+	Log(LogLevel::Information, "Available devices count = %d:", physicalDeviceCount);
+	for (auto const& device : physicalDevices) 
+	{
+		VkPhysicalDeviceProperties deviceProperties = {};
+		VkPhysicalDeviceFeatures deviceFeatures = {};
+		_instanceVkFunctions.vkGetPhysicalDeviceProperties(device, &deviceProperties);
+		_instanceVkFunctions.vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+		physicalDeviceProperties[device] = deviceProperties;
+		physicalDeviceFeatures[device] = deviceFeatures;
+		Log(LogLevel::Information, "device %s", deviceProperties.deviceName); 
+	}
+
+#if 0
 	for (uint32_t i = 0; i < physicalDeviceCount; ++i)
 	{
 		VkPhysicalDeviceProperties deviceProperties;
@@ -1337,6 +1361,41 @@ void VulkanIntroducingPVRShell::retrievePhysicalDevices()
 			break;
 		}
 	}
+#else
+	for(auto const& device: physicalDevices)
+	{
+		uint32_t numExtensions = 0;
+
+		vulkanSuccessOrDie(
+			_instanceVkFunctions.vkEnumerateDeviceExtensionProperties(device, nullptr, &numExtensions, nullptr), "Failed to enumerate Device Extension properties");
+
+		std::vector<VkExtensionProperties> extensiosProps;
+		extensiosProps.resize(numExtensions);
+
+		vulkanSuccessOrDie(_instanceVkFunctions.vkEnumerateDeviceExtensionProperties(device, nullptr, &numExtensions, extensiosProps.data()),
+			"Failed to enumerate Device Extension properties");
+		
+		auto DeviceExtensionsCount = ARRAY_SIZE(Extensions::DeviceExtensions);
+		auto available_extensions = filterExtensions(extensiosProps, Extensions::DeviceExtensions, DeviceExtensionsCount);
+
+		if (available_extensions.size() == DeviceExtensionsCount)
+		{
+			if (physicalDeviceProperties[device].deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+			{
+				_physicalDevice = device;
+				Log(LogLevel::Information, "Selected device: %s", physicalDeviceProperties[device].deviceName);
+				break;
+			}
+			else { continue; }
+		}
+		else
+		{
+			Log(LogLevel::Critical, "Suitable devices are not found");
+			exit(-1);
+		}
+	}
+#endif
+	//_physicalDevice = physicalDevices[1];
 
 	if (physicalDeviceCount && _physicalDevice == VK_NULL_HANDLE)
 	{
