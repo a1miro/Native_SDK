@@ -38,6 +38,7 @@ set(VULKAN_EXAMPLES
 	RayTracingDenoising
 	Shadows
 	Subgroups
+	BilrepFlip
 )
 
 foreach(EXAMPLE ${VULKAN_EXAMPLES})
