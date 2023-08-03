@@ -419,6 +419,12 @@ enum
 	MAX_SWAPCHAIN_IMAGES = 4
 };
 
+// Specifies the size of a particular Triangle vertex used inside the vbo.
+struct Vertex
+{
+	glm::vec4 vertex;
+	float uv[2];
+};
 
 /// <summary>VulkanIntroducingPVRShell is the main demo class implementing the pvr::Shell functionality required for rendering to the screen.
 /// The PowerVR shell handles all OS specific initialisation code, and is extremely convenient for writing portable applications. It also has several built in
@@ -492,13 +498,17 @@ class VulkanIntroducingPVRShell : public pvr::Shell
 	VkDeviceBindings _deviceVkFunctions;
 
 	// The vertex buffer object used for rendering.
-	VkBuffer _vbo;
-
 	// The memory backing for the vertex buffer object.
+	VkBuffer _vbo;
 	VkDeviceMemory _vboMemory;
+
+	// Creating index buffer and memory objects
+	VkBuffer _ibo;
+	VkDeviceMemory _iboMemory;
 
 	// The memory property flags used for allocating the memory for the vbo memory.
 	VkMemoryPropertyFlags _vboMemoryFlags;
+	VkMemoryPropertyFlags _iboMemoryFlags;
 
 	// The model view projection buffer object used for rendering
 	VkBuffer _modelViewProjectionBuffer;
@@ -602,6 +612,8 @@ class VulkanIntroducingPVRShell : public pvr::Shell
 
 	// The size of a single vertex corresponding to the stride of a vertex.
 	uint32_t _vboStride;
+	std::vector<Vertex> _vertices;
+	std::vector<uint16_t> _indices;
 
 	// The size and data included in the triangle texture.
 	VkExtent2D _textureDimensions;
@@ -638,6 +650,7 @@ public:
 	void createPipelineCache();
 	void createPipeline();
 	void createVbo();
+	void createIbo();
 	void createUniformBuffers();
 	void createTexture();
 	void generateTexture();
@@ -689,6 +702,8 @@ public:
 			_cmdBuffers[i] = VK_NULL_HANDLE;
 			_debugReportCallbacks[i] = VK_NULL_HANDLE;
 		}
+
+
 	}
 };
 
@@ -2308,10 +2323,12 @@ void VulkanIntroducingPVRShell::recordCommandBuffers()
 		// Bind the vertex buffer used for sourcing the triangle vertices
 		VkDeviceSize vertexOffset = 0;
 		_deviceVkFunctions.vkCmdBindVertexBuffers(_cmdBuffers[i], 0, 1, &_vbo, &vertexOffset);
+		_deviceVkFunctions.vkCmdBindIndexBuffer(_cmdBuffers[i], _ibo, 0, VK_INDEX_TYPE_UINT16);
 
 		// Record a non-indexed draw command specifying the number of vertices
 		//_deviceVkFunctions.vkCmdDraw(_cmdBuffers[i], 3, 1, 0, 0);
-		_deviceVkFunctions.vkCmdDraw(_cmdBuffers[i], 4, 1, 0, 0);
+		_deviceVkFunctions.vkCmdDrawIndexed(_cmdBuffers[i], static_cast<uint32_t>(_indices.size()), 1, 0, 0, 0);
+
 
 		// Ends the current renderPass instance.
 		_deviceVkFunctions.vkCmdEndRenderPass(_cmdBuffers[i]);
@@ -2437,6 +2454,8 @@ void VulkanIntroducingPVRShell::createPipeline()
 	inputAssemblyInfo.flags = 0;
 	inputAssemblyInfo.pNext = nullptr;
 	inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	//inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+	//inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
 	inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
 
 	// The resulting primitives are clipped and sent to the next pipeline stage...
@@ -2454,6 +2473,7 @@ void VulkanIntroducingPVRShell::createPipeline()
 	rasterizationInfo.cullMode = VK_CULL_MODE_BACK_BIT;
 	rasterizationInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	rasterizationInfo.lineWidth = 1.0f;
+	rasterizationInfo.lineWidth = 10.0f;
 	rasterizationInfo.depthBiasClamp = 0.0f;
 	rasterizationInfo.depthBiasConstantFactor = 0.0f;
 	rasterizationInfo.depthBiasEnable = VK_FALSE;
@@ -2576,17 +2596,27 @@ void VulkanIntroducingPVRShell::createVbo()
 {
 	// Creates the Vertex Buffer Object (vbo) and allocates its memory. This vbo is used for rendering a textured triangle to the screen.
 
-	// Specifies the size of a particular Triangle vertex used inside the vbo.
-	struct TriangleVertex
-	{
-		glm::vec4 vertex;
-		float uv[2];
-	};
+	_vboStride = sizeof(Vertex);
+	#if 1
+	_vertices.emplace_back(Vertex{ glm::vec4(0.5f, -0.288f, 0.0f, 1.0f), { -0.5f, -0.5f } });
+	_vertices.emplace_back(Vertex{ glm::vec4(-0.5f, -0.288f, 0.0f, 1.0f), { 0.5f, -0.5f } });
+	_vertices.emplace_back(Vertex{ glm::vec4(0.0f, 0.577f, 0.0f, 1.0f), { 0.5f, 0.5f } });
+	_vertices.emplace_back(Vertex{ glm::vec4(1.0f, 0.577f, 0.0f, 1.0f), { -0.5f, 0.5f } });
+	#endif
 
-	_vboStride = sizeof(TriangleVertex);
+#if 0
+	_vertices.emplace_back(Vertex{ glm::vec4(-0.5f, -0.5f, 0.0f, 1.0f), { -0.5f, -0.5f } });
+	_vertices.emplace_back(Vertex{ glm::vec4(0.5f, -0.5f, 0.0f, 1.0f), { 0.5f, -0.5f } });
+	_vertices.emplace_back(Vertex{ glm::vec4(0.5f, 0.5f, 0.0f, 1.0f), { 0.5f, 0.5f } });
+	_vertices.emplace_back(Vertex{ glm::vec4(-0.5f, 0.5f, 0.0f, 1.0f), { -0.5f, 0.5f } });
+#endif
+
+
+	_indices.insert(_indices.begin(),{0,1,2,2,3,0});
+
 	// Calculate the size of the vbo taking into account multiple vertices.
-	//const uint32_t vboSize = _vboStride * 3;
-	const uint32_t vboSize = _vboStride * 4;
+	const uint32_t vboSize = _vboStride * _vertices.size();
+	const uint32_t iboSize = sizeof(_indices[0]) * _indices.size();
 
 	// The use of VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT specifies that memory allocated with this memory property type is the most efficient for device access.
 	// Note that memory property flag VK_MEMORY_PROPERTY_HOST_COHERENT_BIT has not been specified meaning the host application must manage the memory accesses to this memory
@@ -2595,21 +2625,9 @@ void VulkanIntroducingPVRShell::createVbo()
 	VkMemoryPropertyFlags requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 	VkMemoryPropertyFlags optimalFlags = requiredFlags | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 	createBufferAndMemory(vboSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, requiredFlags, optimalFlags, _vbo, _vboMemory, _vboMemoryFlags);
+	createBufferAndMemory(iboSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, requiredFlags, optimalFlags, _ibo, _iboMemory, _iboMemoryFlags);
 
-	// Construct the triangle vertices.
-	#if 0
-	TriangleVertex triangle[3];
-	triangle[0] = { glm::vec4(0.5f, -0.288f, 0.0f, 1.0f), { 1.f, 0.f } };
-	triangle[1] = { glm::vec4(-0.5f, -0.288f, 0.0f, 1.0f), { 0.f, 0.f } };
-	triangle[2] = { glm::vec4(0.0f, 0.577f, 0.0f, 1.0f), { .5f, 1.f } };
-	#endif
-
-	TriangleVertex triangle[4];
-	triangle[0] = { glm::vec4(0.5f, -0.288f, 0.0f, 1.0f), { 1.f, 0.f } };
-	triangle[1] = { glm::vec4(-0.5f, -0.288f, 0.0f, 1.0f), { 0.f, 0.f } };
-	triangle[2] = { glm::vec4(0.0f, 0.577f, 0.0f, 1.0f), { 0.f, 1.f } };
-	triangle[3] = { glm::vec4(0.0f, 0.577f, 0.0f, 1.0f), { 1.f, 1.f } };
-
+	
 	// The use of VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT indicates that memory allocated with this memory property type can be mapped and unmapped enabling host
 	// access using calls to vkMapMemory and vkUnmapMemory respectively. When this memory property type is used we are able to map/update/unlap the memory to update the contents of
 	// the memory.
@@ -2621,7 +2639,7 @@ void VulkanIntroducingPVRShell::createVbo()
 		void* mapped = 0;
 		vulkanSuccessOrDie(_deviceVkFunctions.vkMapMemory(_device, _vboMemory, 0, vboSize, 0, &mapped), "Failed to map the memory");
 
-		memcpy(mapped, triangle, sizeof(triangle));
+		memcpy(mapped, _vertices.data(), _vertices.size() * _vboStride);
 
 		// If the memory property flags for the allocated memory included the use of VK_MEMORY_PROPERTY_HOST_COHERENT_BIT then the host does not need to manage the
 		// memory accesses explicitly using the host cache management commands vkFlushMappedMemoryRanges and vkInvalidateMappedMemoryRanges to flush host writes to
@@ -2642,6 +2660,7 @@ void VulkanIntroducingPVRShell::createVbo()
 	}
 	else
 	{
+		#if 0
 		// We use our buffer creation function to generate a staging buffer. We pass the VK_BUFFER_USAGE_TRANSFER_SRC_BIT flag to specify its use.
 		VkBuffer stagingBuffer;
 		VkDeviceMemory stagingBufferMemory;
@@ -2743,8 +2762,38 @@ void VulkanIntroducingPVRShell::createVbo()
 		_deviceVkFunctions.vkFreeCommandBuffers(_device, _commandPool, 1, &cmdBuffers);
 		_deviceVkFunctions.vkFreeMemory(_device, stagingBufferMemory, nullptr);
 		_deviceVkFunctions.vkDestroyBuffer(_device, stagingBuffer, nullptr);
+		#endif
+	}
+	
+	if ((_iboMemoryFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) != 0)
+	{
+		// Memory created using vkAllocateMemory isn't directly accessible to the host and instead must be mapped manually.
+		// Note that only memory created with the memory property flag VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT can be mapped.
+		// vkMapMemory retrieves a host virtual address pointer to a region of a mappable memory object.
+		void* mapped = 0;
+		vulkanSuccessOrDie(_deviceVkFunctions.vkMapMemory(_device, _iboMemory, 0, iboSize, 0, &mapped), "Failed to map the memory");
+
+		memcpy(mapped, _indices.data(), iboSize);
+
+		// If the memory property flags for the allocated memory included the use of VK_MEMORY_PROPERTY_HOST_COHERENT_BIT then the host does not need to manage the
+		// memory accesses explicitly using the host cache management commands vkFlushMappedMemoryRanges and vkInvalidateMappedMemoryRanges to flush host writes to
+		// the device or make device writes visible to the host respectively. This behaviour is handled by the implementation.
+		if ((_iboMemoryFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
+		{
+			// Flush the memory guaranteeing that host writes to the memory ranges specified are made available to the device.
+			VkMappedMemoryRange memoryRange = {};
+			memoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+			memoryRange.memory = _iboMemory;
+			memoryRange.offset = 0;
+			memoryRange.size = iboSize;
+			_deviceVkFunctions.vkFlushMappedMemoryRanges(_device, 1, &memoryRange);
+		}
+
+		// Note that simply unmapping non-coherent memory doesn't implicitly flush the mapped memory.
+		_deviceVkFunctions.vkUnmapMemory(_device, _iboMemory);
 	}
 }
+
 
 /// <summary>Gets the minimum aligned data size based on the size of the data to align and the minimum alignment size specified.</summary>
 /// <param name="dataSize">The size of the data to align based on the minimum alignment.</param>
@@ -2800,26 +2849,21 @@ void VulkanIntroducingPVRShell::createUniformBuffers()
 /// <summary>Generates a simple checker board texture.</summary>
 void VulkanIntroducingPVRShell::generateTexture()
 {
+	uint32_t div = 32;
+	uint32_t reminder = 16;
 	// Generates a simple checkered texture which will be applied and used as a texture for the triangle we are going to render and rotate on screen.
 	for (uint32_t x = 0; x < _textureDimensions.width; ++x)
 	{
 		for (uint32_t y = 0; y < _textureDimensions.height; ++y)
 		{
 			float g = 0.3f;
-			//if (x % 128 < 64 && y % 128 < 64) { g = 1; }
-			//if (x % 128 >= 64 && y % 128 >= 64) { g = 1; }
-
-			if (x % 32 < 16 && y % 32 < 16) { g = 1; }
-			if (x % 32 >= 16 && y % 32 >= 16) { g = 1; }
+			if (x % div < reminder && y % div < reminder) { g = 1; }
+			if (x % div >= reminder && y % div >= reminder) { g = 1; }
 
 			uint8_t* pixel = _textureData.data() + (x * _textureDimensions.height * 4) + (y * 4);
 			pixel[0] = static_cast<uint8_t>(100 * g);
-			//pixel[1] = static_cast<uint8_t>(80 * g);
-			//pixel[2] = static_cast<uint8_t>(70 * g);
-			
-			pixel[1] = static_cast<uint8_t>(40 * g);
-			pixel[2] = static_cast<uint8_t>(50 * g);
-
+			pixel[1] = static_cast<uint8_t>(80 * g);
+			pixel[2] = static_cast<uint8_t>(70 * g);
 			pixel[3] = 255;
 		}
 	}
@@ -3259,9 +3303,13 @@ void VulkanIntroducingPVRShell::createTexture()
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	samplerInfo.magFilter = VK_FILTER_LINEAR;
 	samplerInfo.minFilter = VK_FILTER_LINEAR;
-	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	//samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	//samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	//samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+
 	samplerInfo.anisotropyEnable = VK_FALSE;
 	samplerInfo.maxAnisotropy = 1.0f;
 	samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
