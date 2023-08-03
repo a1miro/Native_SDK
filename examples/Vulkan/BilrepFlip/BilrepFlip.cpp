@@ -1082,6 +1082,18 @@ pvr::Result VulkanIntroducingPVRShell::releaseView()
 		_deviceVkFunctions.vkDestroyPipelineCache(_device, _pipelineCache, nullptr);
 		_pipelineCache = VK_NULL_HANDLE;
 	}
+	
+	if (_ibo)
+	{
+		_deviceVkFunctions.vkDestroyBuffer(_device, _ibo, nullptr);
+		_ibo = VK_NULL_HANDLE;
+	}
+	if (_iboMemory)
+	{
+		_deviceVkFunctions.vkFreeMemory(_device, _iboMemory, nullptr);
+		_iboMemory = VK_NULL_HANDLE;
+	}
+
 	if (_vbo)
 	{
 		_deviceVkFunctions.vkDestroyBuffer(_device, _vbo, nullptr);
