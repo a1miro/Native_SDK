@@ -24,12 +24,31 @@
 
 // STL C++ headers
 #include<map> 
+#include<set>
+#include<functional>
+#include<algorithm>
+#include<optional>
 
 // conditionally include dlfcn.h when the X11 XCB window system is to be used by the application. dlfcn.h is required for dynamically opening the xcb library using dlopen and
 // closing it using dlclose.
 #ifdef VK_USE_PLATFORM_XCB_KHR
 #include <dlfcn.h>
 #endif
+
+struct QueueFamilyIndices {
+    std::optional<uint32_t> graphicsFamily;
+    std::optional<uint32_t> presentFamily;
+
+    bool isComplete() {
+        return graphicsFamily.has_value() && presentFamily.has_value();
+    }
+};
+
+struct SwapChainSupportDetails {
+    VkSurfaceCapabilitiesKHR capabilities;
+    std::vector<VkSurfaceFormatKHR> formats;
+    std::vector<VkPresentModeKHR> presentModes;
+};
 
 /// <summary>Map a VkDebugReportFlagsEXT variable to a corresponding log severity.</summary>
 /// <param name="flags">A set of VkDebugReportFlagsEXT specifying the type of event which triggered the callback.</param>
@@ -400,6 +419,7 @@ enum
 	MAX_SWAPCHAIN_IMAGES = 4
 };
 
+
 /// <summary>VulkanIntroducingPVRShell is the main demo class implementing the pvr::Shell functionality required for rendering to the screen.
 /// The PowerVR shell handles all OS specific initialisation code, and is extremely convenient for writing portable applications. It also has several built in
 /// command line features, which allow you to specify attributes such as the method of vsync to use. The demo is constructed around a "PVRShell" superclass.
@@ -629,6 +649,11 @@ public:
 	void createBufferAndMemory(VkDeviceSize size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags requiredMemFlags, VkMemoryPropertyFlags optimalMemFlags, VkBuffer& outBuffer,
 		VkDeviceMemory& outMemory, VkMemoryPropertyFlags& outMemFlags);
 	uint32_t getCompatibleQueueFamily();
+    bool isQueueFamilySupported(const VkPhysicalDevice& device);
+	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+    bool isAllExtensionSupported(VkPhysicalDevice device);
+	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+    bool isDeviceSuitable(VkPhysicalDevice device); 
 
 	/// <summary>Default constructor for VulkanIntroducingPVRShell used to initialise the variables used throughout the demo.</summary>
 	VulkanIntroducingPVRShell()
@@ -667,6 +692,100 @@ public:
 	}
 };
 
+
+
+SwapChainSupportDetails VulkanIntroducingPVRShell::querySwapChainSupport(VkPhysicalDevice device) {
+        SwapChainSupportDetails details;
+
+        _instanceVkFunctions.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, _surface, &details.capabilities);
+
+        uint32_t formatCount;
+        _instanceVkFunctions.vkGetPhysicalDeviceSurfaceFormatsKHR(device, _surface, &formatCount, nullptr);
+
+        if (formatCount != 0) {
+            details.formats.resize(formatCount);
+            _instanceVkFunctions.vkGetPhysicalDeviceSurfaceFormatsKHR(device, _surface, &formatCount, details.formats.data());
+        }
+
+        uint32_t presentModeCount;
+        _instanceVkFunctions.vkGetPhysicalDeviceSurfacePresentModesKHR(device, _surface, &presentModeCount, nullptr);
+
+        if (presentModeCount != 0) {
+            details.presentModes.resize(presentModeCount);
+            _instanceVkFunctions.vkGetPhysicalDeviceSurfacePresentModesKHR(device, _surface, &presentModeCount, details.presentModes.data());
+        }
+
+        return details;
+    }
+
+    bool VulkanIntroducingPVRShell::isDeviceSuitable(VkPhysicalDevice device) {
+        QueueFamilyIndices indices = findQueueFamilies(device);
+
+        auto extensionsSupported = isAllExtensionSupported(device);
+
+        bool swapChainAdequate = false;
+        if (extensionsSupported) {
+            SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
+            swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
+        }
+
+        return indices.isComplete() && extensionsSupported && swapChainAdequate;
+    }
+
+    bool VulkanIntroducingPVRShell::isAllExtensionSupported(VkPhysicalDevice device) {
+		uint32_t available_extensions_count = 0;
+
+		vulkanSuccessOrDie(
+			_instanceVkFunctions.vkEnumerateDeviceExtensionProperties(device, nullptr, &available_extensions_count, nullptr), "Failed to enumerate Device Extension properties");
+
+		std::vector<VkExtensionProperties> available_extensions;
+		available_extensions.resize(available_extensions_count);
+
+		vulkanSuccessOrDie(_instanceVkFunctions.vkEnumerateDeviceExtensionProperties(device, nullptr, &available_extensions_count, available_extensions.data()),
+			"Failed to enumerate Device Extension properties");
+
+		// create two sets of extensions and compare them
+		std::set<std::string> available_extensions_set;
+		std::for_each(available_extensions.begin(), available_extensions.end(),
+			[&available_extensions_set](const VkExtensionProperties& ext_prop) { available_extensions_set.insert(ext_prop.extensionName); });
+		std::set<std::string> required_extensions_set(Extensions::DeviceExtensions, Extensions::DeviceExtensions + ARRAY_SIZE(Extensions::DeviceExtensions));
+		return std::ranges::includes(available_extensions_set.begin(), available_extensions_set.end(), required_extensions_set.begin(), required_extensions_set.end());
+	}
+
+    QueueFamilyIndices VulkanIntroducingPVRShell::findQueueFamilies(VkPhysicalDevice device) {
+        QueueFamilyIndices indices;
+
+        uint32_t queueFamilyCount = 0;
+        //vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+		_instanceVkFunctions.vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+        std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+        _instanceVkFunctions.vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+        int i = 0;
+        for (const auto& queueFamily : queueFamilies) {
+            if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+                indices.graphicsFamily = i;
+            }
+
+            VkBool32 presentSupport = false;
+            _instanceVkFunctions.vkGetPhysicalDeviceSurfaceSupportKHR(device, i, _surface, &presentSupport);
+
+            if (presentSupport) {
+                indices.presentFamily = i;
+            }
+
+            if (indices.isComplete()) {
+                break;
+            }
+
+            i++;
+        }
+
+        return indices;
+    }
+
+
 /// <summary>Code in initApplication() will be called by Shell once per run, before the rendering context is created.
 /// Used to initialize variables that are not dependent on it(e.g.external modules, loading meshes, etc.).If the rendering
 /// context is lost, initApplication() will not be called again.</summary>
@@ -696,8 +815,8 @@ pvr::Result VulkanIntroducingPVRShell::initView()
 #endif
 
 	// Retrieve and create the various Vulkan resources and objects used throughout this demo
-	retrievePhysicalDevices();
 	createSurface(getWindow(), getDisplay(), getConnection());
+	retrievePhysicalDevices();
 	createLogicalDevice();
 	createSwapchain();
 	createDepthStencilImages();
@@ -1308,7 +1427,6 @@ void VulkanIntroducingPVRShell::initDebugCallbacks()
 	}
 }
 
-#define TP() Log(LogLevel::Information, "line: %d", __LINE__) 
 /// <summary>Retrieve the physical devices from the list of available physical devices of the instance.</summary>
 void VulkanIntroducingPVRShell::retrievePhysicalDevices()
 {
@@ -1346,57 +1464,15 @@ void VulkanIntroducingPVRShell::retrievePhysicalDevices()
 		Log(LogLevel::Information, "device %s", deviceProperties.deviceName); 
 	}
 
-#if 0
-	for (uint32_t i = 0; i < physicalDeviceCount; ++i)
+	for(auto const& device: physicalDevices)
 	{
-		VkPhysicalDeviceProperties deviceProperties;
-		VkPhysicalDeviceFeatures deviceFeatures;
-		_instanceVkFunctions.vkGetPhysicalDeviceProperties(physicalDevices[i], &deviceProperties);
-		_instanceVkFunctions.vkGetPhysicalDeviceFeatures(physicalDevices[i], &deviceFeatures);
-
-		if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU || deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
+		if (isDeviceSuitable(device))
 		{
-			// We return the device compatible with our needs.
-			Log(LogLevel::Information, "Active Device is -- %s", deviceProperties.deviceName);
-			_physicalDevice = physicalDevices[i];
+			_physicalDevice = device;
+			Log(LogLevel::Information, "Selected device: %s", physicalDeviceProperties[device].deviceName);
 			break;
 		}
 	}
-#else
-	for(auto const& device: physicalDevices)
-	{
-		uint32_t numExtensions = 0;
-
-		vulkanSuccessOrDie(
-			_instanceVkFunctions.vkEnumerateDeviceExtensionProperties(device, nullptr, &numExtensions, nullptr), "Failed to enumerate Device Extension properties");
-
-		std::vector<VkExtensionProperties> extensiosProps;
-		extensiosProps.resize(numExtensions);
-
-		vulkanSuccessOrDie(_instanceVkFunctions.vkEnumerateDeviceExtensionProperties(device, nullptr, &numExtensions, extensiosProps.data()),
-			"Failed to enumerate Device Extension properties");
-		
-		auto DeviceExtensionsCount = ARRAY_SIZE(Extensions::DeviceExtensions);
-		auto available_extensions = filterExtensions(extensiosProps, Extensions::DeviceExtensions, DeviceExtensionsCount);
-
-		if (available_extensions.size() == DeviceExtensionsCount)
-		{
-			if (physicalDeviceProperties[device].deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-			{
-				_physicalDevice = device;
-				Log(LogLevel::Information, "Selected device: %s", physicalDeviceProperties[device].deviceName);
-				break;
-			}
-			else { continue; }
-		}
-		else
-		{
-			Log(LogLevel::Critical, "Suitable devices are not found");
-			exit(-1);
-		}
-	}
-#endif
-	//_physicalDevice = physicalDevices[1];
 
 	if (physicalDeviceCount && _physicalDevice == VK_NULL_HANDLE)
 	{
@@ -1595,6 +1671,40 @@ uint32_t VulkanIntroducingPVRShell::getCompatibleQueueFamily()
 
 	throw pvr::PvrError("Could not find a compatible queue family supporting both graphics capabilities and presentation to the screen");
 }
+
+/// <summary>Get the compatible queue families from the device selected.</summary>
+bool VulkanIntroducingPVRShell::isQueueFamilySupported(const VkPhysicalDevice& device)
+{
+	// Attempts to retrieve a queue family which supports both graphics and presentation for the given application surface. This application has been
+	// written in such a way which requires that the graphics and presentation queue families match.
+	// Not all physical devices will support Window System Integration (WSI) support furthermore not all queue families for a particular physical device will support
+	// presenting to the screen and thus these capabilities must be separately queried for support.
+
+	uint32_t queueFamilyCount;
+	// Retrieves the number of queue families the physical device supports.
+	_instanceVkFunctions.vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+	std::vector<VkBool32> queueFamilySupportsPresentation;
+	queueFamilySupportsPresentation.resize(queueFamilyCount);
+
+	std::vector<VkQueueFamilyProperties> queueFamilyProperties;
+	queueFamilyProperties.resize(queueFamilyCount);
+
+	// Retrieves the properties of queues available on the physical device
+	_instanceVkFunctions.vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilyProperties.data());
+
+	// For each queue family query whether it supports presentation and ensure the same queue family also supports graphics capabilities.
+	for (uint32_t i = 0; i < queueFamilyCount; ++i)
+	{
+		vulkanSuccessOrDie(_instanceVkFunctions.vkGetPhysicalDeviceSurfaceSupportKHR(device, i, _surface, &queueFamilySupportsPresentation[i]),
+			"Unable to determine whether the specified queue family supports presentation for the given surface");
+		if (((queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0) && queueFamilySupportsPresentation[i]) { return true; }
+	}
+
+	return false;
+}
+
+
 
 /// <summary>Create the logical device.</summary>
 void VulkanIntroducingPVRShell::createLogicalDevice()

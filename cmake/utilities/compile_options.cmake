@@ -59,7 +59,7 @@ function(apply_example_compile_options_to_target THETARGET)
 	endif()
 	
 	# Use c++14
-	set_target_properties(${THETARGET} PROPERTIES CXX_STANDARD 14)
+	set_target_properties(${THETARGET} PROPERTIES CXX_STANDARD 20)
 	
 	# Enable Debug and Release flags as appropriate
 	target_compile_definitions(${THETARGET} PRIVATE $<$<CONFIG:Debug>:DEBUG=1> $<$<NOT:$<CONFIG:Debug>>:NDEBUG=1 RELEASE=1>)

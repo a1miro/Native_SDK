@@ -15,12 +15,18 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT BilrepFlip)
 
+
 set(SRC_FILES BilrepFlip.cpp)
 
 set(ASSET_FOLDER ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Assets_BilrepFlip)
 
 # Adds an executable (or ndk library for Android) and necessary files like plists for Mac/iOS etc.
 add_platform_specific_executable(BilrepFlip ${SRC_FILES})
+
+# set the target property c++ standard
+# AM: Unfortunatly, the target CXX_STANDARD property is set in cmake/Utitilies/compile.options.cmake,
+# so ther is no possibility to set it here.
+# set_property(TARGET BilrepFlip PROPERTY CXX_STANDARD 20)
 
 #################################### ASSET FILES ##########################################
 # For platforms supporting it, will be packaged with the executable for runtime use.
