@@ -763,7 +763,7 @@ SwapChainSupportDetails VulkanIntroducingPVRShell::querySwapChainSupport(VkPhysi
 		std::for_each(available_extensions.begin(), available_extensions.end(),
 			[&available_extensions_set](const VkExtensionProperties& ext_prop) { available_extensions_set.insert(ext_prop.extensionName); });
 		std::set<std::string> required_extensions_set(Extensions::DeviceExtensions, Extensions::DeviceExtensions + ARRAY_SIZE(Extensions::DeviceExtensions));
-		return std::ranges::includes(available_extensions_set.begin(), available_extensions_set.end(), required_extensions_set.begin(), required_extensions_set.end());
+		return std::includes(available_extensions_set.begin(), available_extensions_set.end(), required_extensions_set.begin(), required_extensions_set.end());
 	}
 
     QueueFamilyIndices VulkanIntroducingPVRShell::findQueueFamilies(VkPhysicalDevice device) {
@@ -2620,7 +2620,7 @@ void VulkanIntroducingPVRShell::createVbo()
 
 #if 1
 	_vertices.emplace_back(Vertex{ glm::vec4(0.5f, -0.5f, 0.0f, 1.0f), { 1.0f, -0.0f } });
-	_vertices.emplace_back(Vertex{ glm::vec4(-0.5f, -0.5f, 0.0f, 1.0f), { 0.0f, -0.0f } });
+	_vertices.emplace_back(Vertex{ glm::vec4(-0.5f, -0.5f, 0.0f, 1.0f), { 0.0f, 0.0f } });
 	_vertices.emplace_back(Vertex{ glm::vec4(-0.5f, 0.5f, 0.0f, 1.0f), { 0.0f, 1.0f } });
 	_vertices.emplace_back(Vertex{ glm::vec4(0.5f, 0.5f, 0.0f, 1.0f), { 1.0f, 1.0f } });
 #endif
