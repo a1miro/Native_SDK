@@ -703,7 +703,6 @@ public:
 			_debugReportCallbacks[i] = VK_NULL_HANDLE;
 		}
 
-
 	}
 };
 
@@ -807,6 +806,7 @@ SwapChainSupportDetails VulkanIntroducingPVRShell::querySwapChainSupport(VkPhysi
 /// <returns>Result::Success if no error occurred.</returns>
 pvr::Result VulkanIntroducingPVRShell::initApplication()
 {
+	setDimensions(640, 480);
 	setBackBufferColorspace(pvr::ColorSpace::lRGB);
 	// Here we are setting the back buffer colorspace value to lRGB for simplicity: We are working directly with the "final" sRGB
 	// values in our textures and passing the values through.
@@ -821,6 +821,7 @@ pvr::Result VulkanIntroducingPVRShell::initApplication()
 /// <returns>Result::Success if no error occurred.</returns>
 pvr::Result VulkanIntroducingPVRShell::initView()
 {
+
 	// Create the Vulkan instance object, initialise the Vulkan library and initialise the Vulkan instance function pointers
 	createInstance();
 
@@ -939,6 +940,7 @@ pvr::Result VulkanIntroducingPVRShell::renderFrame()
 
 		// Set the model view projection matrix
 		//const auto modelViewProjectionMatrix = _viewProjectionMatrix * _modelMatrix;
+		// AM: Disable rotation here to make the shape static
 		const auto modelViewProjectionMatrix = _viewProjectionMatrix;
 
 		// Update the model view projection matrix buffer data for the current swapchain index. Note that the memory for the whole buffer was mapped just after it was allocated so
@@ -2609,20 +2611,19 @@ void VulkanIntroducingPVRShell::createVbo()
 	// Creates the Vertex Buffer Object (vbo) and allocates its memory. This vbo is used for rendering a textured triangle to the screen.
 
 	_vboStride = sizeof(Vertex);
-	#if 1
+	#if 0
 	_vertices.emplace_back(Vertex{ glm::vec4(0.5f, -0.288f, 0.0f, 1.0f), { -0.5f, -0.5f } });
 	_vertices.emplace_back(Vertex{ glm::vec4(-0.5f, -0.288f, 0.0f, 1.0f), { 0.5f, -0.5f } });
 	_vertices.emplace_back(Vertex{ glm::vec4(0.0f, 0.577f, 0.0f, 1.0f), { 0.5f, 0.5f } });
 	_vertices.emplace_back(Vertex{ glm::vec4(1.0f, 0.577f, 0.0f, 1.0f), { -0.5f, 0.5f } });
 	#endif
 
-#if 0
-	_vertices.emplace_back(Vertex{ glm::vec4(-0.5f, -0.5f, 0.0f, 1.0f), { -0.5f, -0.5f } });
-	_vertices.emplace_back(Vertex{ glm::vec4(0.5f, -0.5f, 0.0f, 1.0f), { 0.5f, -0.5f } });
-	_vertices.emplace_back(Vertex{ glm::vec4(0.5f, 0.5f, 0.0f, 1.0f), { 0.5f, 0.5f } });
-	_vertices.emplace_back(Vertex{ glm::vec4(-0.5f, 0.5f, 0.0f, 1.0f), { -0.5f, 0.5f } });
+#if 1
+	_vertices.emplace_back(Vertex{ glm::vec4(0.5f, -0.5f, 0.0f, 1.0f), { 1.0f, -0.0f } });
+	_vertices.emplace_back(Vertex{ glm::vec4(-0.5f, -0.5f, 0.0f, 1.0f), { 0.0f, -0.0f } });
+	_vertices.emplace_back(Vertex{ glm::vec4(-0.5f, 0.5f, 0.0f, 1.0f), { 0.0f, 1.0f } });
+	_vertices.emplace_back(Vertex{ glm::vec4(0.5f, 0.5f, 0.0f, 1.0f), { 1.0f, 1.0f } });
 #endif
-
 
 	_indices.insert(_indices.begin(),{0,1,2,2,3,0});
 
