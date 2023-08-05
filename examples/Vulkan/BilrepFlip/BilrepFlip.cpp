@@ -831,8 +831,8 @@ pvr::Result VulkanIntroducingPVRShell::initView()
 #endif
 
 	// Retrieve and create the various Vulkan resources and objects used throughout this demo
-	createSurface(getWindow(), getDisplay(), getConnection());
 	retrievePhysicalDevices();
+	createSurface(getWindow(), getDisplay(), getConnection());
 	createLogicalDevice();
 	createSwapchain();
 	createDepthStencilImages();
@@ -1495,7 +1495,8 @@ void VulkanIntroducingPVRShell::retrievePhysicalDevices()
 
 	for(auto const& device: physicalDevices)
 	{
-		if (isDeviceSuitable(device))
+		// if this is PowerVR device, just use it otherwise check if it is suitable
+		if (strstr(&physicalDeviceProperties[device].deviceName[0], "PowerVR") != nullptr || isDeviceSuitable(device)) 
 		{
 			_physicalDevice = device;
 			Log(LogLevel::Information, "Selected device: %s", physicalDeviceProperties[device].deviceName);
