@@ -1,0 +1,25 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "deploy_texture_mapping",
+            "command": "rsync", 
+            "args": [
+                "-av",
+                "${workspaceFolder}/build/texture_mapping",
+                "amironenko@optiplex390:~/workspace/vulkantutorial/build/"
+            ],
+            "type": "shell" 
+        },
+        {
+            "label": "deploy_vkbonjour",
+            "command": "rsync", 
+            "args": [
+                "-av",
+                "${workspaceFolder}/build/rogue/vkbonjour",
+                "amironenko@optiplex390:~/workspace/vulkantutorial/build/rogue/"
+            ],
+            "type": "shell" 
+        }
+    ]
+}

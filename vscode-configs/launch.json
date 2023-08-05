@@ -1,0 +1,48 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "gdb",
+            "request": "launch",
+            "name": "Debug vkbonjour",
+            "target": "./vkbonjour",
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": true,
+            "preLaunchTask": "deploy_vkbonjour",
+            "ssh": {
+                "host": "optiplex390",
+                "cwd": "/home/amironenko/workspace/vulkantutorial/build/rogue/vkbonjour",
+                "keyfile": "/home/Andrei.Mironenko/.ssh/id_rsa",
+                "user": "amironenko",
+                "forwardX11": false,
+                //"x11host": "localhost",
+                //"x11port": 6000
+                "bootstrap": "export DISPLAY=:0",
+            },
+            "valuesFormatting": "parseText"
+        },
+        {
+            "type": "gdb",
+            "request": "launch",
+            "name": "Debug texture_mapping",
+            "target": "./texture_mapping",
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": true,
+            "preLaunchTask": "deploy_texture_mapping",
+            "ssh": {
+                "host": "optiplex390",
+                "cwd": "/home/amironenko/workspace/vulkantutorial/build/texture_mapping",
+                "keyfile": "/home/Andrei.Mironenko/.ssh/id_rsa",
+                "user": "amironenko",
+                "forwardX11": true,
+                //"x11host": "localhost",
+                //"x11port": 6000
+                "bootstrap": "export DISPLAY=:0",
+            },
+            "valuesFormatting": "parseText"
+        }
+    ]
+}

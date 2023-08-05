@@ -1,0 +1,22 @@
+{
+	"workspaceFolder": "/home/Andrei.Mironenko/vulkantutorial",
+	"remoteUser": "Andrei.Mironenko",
+	"extensions": [
+		"GitHub.copilot",
+		"ms-vscode.cmake-tools",
+		"ms-vscode.cpptools",
+		"ms-vscode.cpptools-extension-pack",
+		"twxs.cmake",
+		"webfreak.debug"
+	],
+	// Set *default* container specific settings.json values on container create.
+	"settings": {
+		"terminal.integrated.defaultProfile.linux": "bash (2)"
+	},
+
+	// Set environment variables for VS Code and sub-processes
+	"remoteEnv": {
+		"VCPKG_ROOT": "/opt/vcpkg",
+		"CMAKE_TOOLCHAIN_FILE": "/opt/vcpkg/scripts/buildsystems/vcpkg.cmake"
+	}
+}
