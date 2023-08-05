@@ -806,7 +806,6 @@ SwapChainSupportDetails VulkanIntroducingPVRShell::querySwapChainSupport(VkPhysi
 /// <returns>Result::Success if no error occurred.</returns>
 pvr::Result VulkanIntroducingPVRShell::initApplication()
 {
-	setDimensions(640, 480);
 	setBackBufferColorspace(pvr::ColorSpace::lRGB);
 	// Here we are setting the back buffer colorspace value to lRGB for simplicity: We are working directly with the "final" sRGB
 	// values in our textures and passing the values through.
@@ -831,8 +830,8 @@ pvr::Result VulkanIntroducingPVRShell::initView()
 #endif
 
 	// Retrieve and create the various Vulkan resources and objects used throughout this demo
-	retrievePhysicalDevices();
 	createSurface(getWindow(), getDisplay(), getConnection());
+	retrievePhysicalDevices();
 	createLogicalDevice();
 	createSwapchain();
 	createDepthStencilImages();
