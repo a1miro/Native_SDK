@@ -830,8 +830,15 @@ pvr::Result VulkanIntroducingPVRShell::initView()
 #endif
 
 	// Retrieve and create the various Vulkan resources and objects used throughout this demo
+#if defined(NullWS)
+	retrievePhysicalDevices();
+	createSurface(getWindow(), getDisplay(), getConnection());
+#else
 	createSurface(getWindow(), getDisplay(), getConnection());
 	retrievePhysicalDevices();
+#endif
+
+
 	createLogicalDevice();
 	createSwapchain();
 	createDepthStencilImages();
