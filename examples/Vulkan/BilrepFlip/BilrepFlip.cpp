@@ -1502,7 +1502,7 @@ void VulkanIntroducingPVRShell::retrievePhysicalDevices()
 	for(auto const& device: physicalDevices)
 	{
 		// if this is PowerVR device, just use it otherwise check if it is suitable
-		if (strstr(&physicalDeviceProperties[device].deviceName[0], "PowerVR") != nullptr || isDeviceSuitable(device)) 
+		if (strstr(&physicalDeviceProperties[device].deviceName[0], "PowerVR") != nullptr || (isDeviceSuitable(device) && physicalDeviceProperties[device].deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)) 
 		{
 			_physicalDevice = device;
 			Log(LogLevel::Information, "Selected device: %s", physicalDeviceProperties[device].deviceName);
