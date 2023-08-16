@@ -45,6 +45,7 @@ add_spirv_shaders_to_target( BilrepFlip
 
 # Create and adds a Windows resource file (Resources.rc) with all the assets that have been added to the target with the previous functions
 add_assets_resource_file(BilrepFlip)
+add_platform_specific_executable(bilrep_data bilrep_data.cpp bilrep_data.h)
 ###########################################################################################
 
 # Apply SDK example specific compile and linker options
@@ -93,3 +94,5 @@ target_link_libraries(BilrepFlip
 	PVRShell
 	${MVK_LIBRARIES}
 )
+
+target_link_libraries(bilrep_data PVRAssets PVRCore)

@@ -28,6 +28,9 @@
 #include<functional>
 #include<algorithm>
 #include<optional>
+#include <cstdlib>
+#include <ctime>
+
 
 // conditionally include dlfcn.h when the X11 XCB window system is to be used by the application. dlfcn.h is required for dynamically opening the xcb library using dlopen and
 // closing it using dlclose.
@@ -2626,13 +2629,13 @@ void VulkanIntroducingPVRShell::createVbo()
 	#endif
 
 #if 1
-	_vertices.emplace_back(Vertex{ glm::vec4(0.5f, -0.5f, 0.0f, 1.0f), { 1.0f, -0.0f } });
 	_vertices.emplace_back(Vertex{ glm::vec4(-0.5f, -0.5f, 0.0f, 1.0f), { 0.0f, 0.0f } });
 	_vertices.emplace_back(Vertex{ glm::vec4(-0.5f, 0.5f, 0.0f, 1.0f), { 0.0f, 1.0f } });
 	_vertices.emplace_back(Vertex{ glm::vec4(0.5f, 0.5f, 0.0f, 1.0f), { 1.0f, 1.0f } });
+	_vertices.emplace_back(Vertex{ glm::vec4(0.5f, -0.5f, 0.0f, 1.0f), { 1.0f, -0.0f } });
 #endif
 
-	_indices.insert(_indices.begin(),{0,1,2,2,3,0});
+	_indices.insert(_indices.begin(),{0,1,3,1,2,3});
 
 	// Calculate the size of the vbo taking into account multiple vertices.
 	const uint32_t vboSize = _vboStride * _vertices.size();
@@ -2866,24 +2869,51 @@ void VulkanIntroducingPVRShell::createUniformBuffers()
 	}
 }
 
+inline uint16_t getIndex(uint32_t x, uint32_t y)
+{
+
+
+
+}
 /// <summary>Generates a simple checker board texture.</summary>
 void VulkanIntroducingPVRShell::generateTexture()
 {
-	uint32_t div = 32;
-	uint32_t reminder = 16;
+	uint32_t div = 64;
+	uint32_t reminder = 32;
+	uint8_t r,g,b;
+
+	std::srand(std::time(nullptr));
+	auto r_base = static_cast<uint8_t>(1 + std::rand() / ((RAND_MAX + 1u) / 255));
+	auto g_base = static_cast<uint8_t>(1 + std::rand() / ((RAND_MAX + 1u) / 255));
+	auto b_base = static_cast<uint8_t>(1 + std::rand() / ((RAND_MAX + 1u) / 255));
+
 	// Generates a simple checkered texture which will be applied and used as a texture for the triangle we are going to render and rotate on screen.
 	for (uint32_t x = 0; x < _textureDimensions.width; ++x)
 	{
 		for (uint32_t y = 0; y < _textureDimensions.height; ++y)
 		{
-			float g = 0.3f;
-			if (x % div < reminder && y % div < reminder) { g = 1; }
-			if (x % div >= reminder && y % div >= reminder) { g = 1; }
+			r = r_base;
+			g = g_base;
+			b = b_base;
+
+			if (x % div < reminder && y % div < reminder)
+			{
+				r = 255;
+				g = 255;
+				b = 255;
+			}
+
+			if (x % div >= reminder && y % div >= reminder)
+			{
+				r = 255;
+				g = 255;
+				b = 255;
+			}
 
 			uint8_t* pixel = _textureData.data() + (x * _textureDimensions.height * 4) + (y * 4);
-			pixel[0] = static_cast<uint8_t>(100 * g);
-			pixel[1] = static_cast<uint8_t>(80 * g);
-			pixel[2] = static_cast<uint8_t>(70 * g);
+			pixel[0] = static_cast<uint8_t>(r);
+			pixel[1] = static_cast<uint8_t>(g);
+			pixel[2] = static_cast<uint8_t>(b);
 			pixel[3] = 255;
 		}
 	}
