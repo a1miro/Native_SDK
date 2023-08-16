@@ -236,6 +236,7 @@ inline uint32_t dataTypeSize(DataType type)
 	case DataType::Fixed16_16: return 4;
 	case DataType::Int16:
 	case DataType::Int16Norm:
+	case DataType::Float16:
 	case DataType::UInt16: return 2;
 	case DataType::UInt8:
 	case DataType::UInt8Norm:
