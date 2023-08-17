@@ -5,6 +5,7 @@
 	path = external/glm/source
 	url = https://github.com/g-truc/glm.git
 [submodule "external/glslang/source"]
+	branch = main
 	path = external/glslang/source
 	url = https://github.com/KhronosGroup/glslang.git
 [submodule "external/pugixml/source"]
