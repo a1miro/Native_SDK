@@ -6,14 +6,6 @@
 */
 //!\cond NO_DOXYGEN
 #include "PVRShell/StateMachine.h"
-#include "PVRShell/Shell.h"
-#include "PVRCore/stream/FileStream.h"
-#include "PVRCore/Log.h"
-#include "PVRCore/Time_.h"
-#include <map>
-#include <cstdlib>
-#include <cmath>
-#include <sstream>
 #pragma warning(disable : 4127)
 
 #if defined(_WIN32)
@@ -98,7 +90,6 @@ void StateMachine::readApiFromCommandLine()
 
 // == Functions to call for corresponding command line parameters ==
 namespace {
-typedef void (*SetShellParameterPtr)(Shell& shell, const char* arg, const char* val);
 #define WARN_AND_QUIT_IF_PARAMETER_NOT_PROVIDED(arg, val) \
 	if (!val) \
 	{ \
@@ -301,7 +292,7 @@ void showCommandLineOptions(Shell& shell, const char* arg, const char* val);
 
 #undef WARNING_UNSUPPORTED_OPTION
 
-const std::map<std::string, SetShellParameterPtr> supportedCommandLineOptions{ std::make_pair("-width", &setWidth), std::make_pair("-height", &setHeight),
+std::map<std::string, SetShellParameterPtr> supportedCommandLineOptions{ std::make_pair("-width", &setWidth), std::make_pair("-height", &setHeight),
 	std::make_pair("-aasamples", &setAASamples), std::make_pair("-fullscreen", &setFullScreen), std::make_pair("-quitafterframe", &setQuitAfterFrame),
 	std::make_pair("-qaf", &setQuitAfterFrame), std::make_pair("-quitaftertime", &setQuitAfterTime), std::make_pair("-qat", &setQuitAfterTime), std::make_pair("-posx", &setPosx),
 	std::make_pair("-posy", &setPosy), std::make_pair("-swaplength", &setSwapLength), std::make_pair("-preferredswaplength", &setSwapLength), std::make_pair("-vsync", &setVsync),
@@ -311,6 +302,8 @@ const std::map<std::string, SetShellParameterPtr> supportedCommandLineOptions{ s
 	std::make_pair("-config", &setDesiredCconfigId), std::make_pair("-forceframetime", &setForceFrameTime), std::make_pair("-fft", &setForceFrameTime),
 	std::make_pair("-version", &showVersion), std::make_pair("-fps", &setShowFps), std::make_pair("-info", &showInfo), std::make_pair("-h", &showCommandLineOptions),
 	std::make_pair("-help", &showCommandLineOptions), std::make_pair("--help", &showCommandLineOptions) };
+
+std::map<std::string, SetShellParameterPtr>& getCommandLineOptions() { return supportedCommandLineOptions; }
 
 namespace {
 void showCommandLineOptions(Shell& /*shell*/, const char* /*arg*/, const char* /*val*/)
@@ -437,6 +430,9 @@ Result StateMachine::executeDownTo(NewState state)
 
 Result StateMachine::executeInitApplication()
 {
+
+	_shell = newDemo();
+
 	Log(LogLevel::Debug, "StateMachine::executeInitApplication executing");
 	if (_shellData.commandLine->getParsedCommandLine().hasOption("-h") || _shellData.commandLine->getParsedCommandLine().hasOption("-help") ||
 		_shellData.commandLine->getParsedCommandLine().hasOption("--help"))
@@ -447,7 +443,6 @@ Result StateMachine::executeInitApplication()
 		return Result::Success;
 	} // ELSE
 
-	_shell = newDemo();
 	{
 		readApiFromCommandLine();
 	} // End linking dynamically

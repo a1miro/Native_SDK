@@ -5,10 +5,23 @@
 \copyright Copyright (c) Imagination Technologies Limited.
 */
 #pragma once
+#include "PVRShell/Shell.h"
+#include "PVRCore/stream/FileStream.h"
+#include "PVRCore/Log.h"
+#include "PVRCore/Time_.h"
+#include <map>
+#include <cstdlib>
+#include <cmath>
+#include <sstream>
+
 #include "PVRShell/OS/ShellOS.h"
 namespace pvr {
 namespace platform {
 class Shell;
+
+
+typedef void (*SetShellParameterPtr)(Shell& shell, const char* arg, const char* val);
+std::map<std::string, SetShellParameterPtr>& getCommandLineOptions();
 
 /// <summary>The StateMachine controlling the PowerVR Shell. Provides the application main loop and callbacks.</summary>
 class StateMachine : public ShellOS
@@ -94,6 +107,7 @@ private:
 	Result executeDown();
 
 	void preExit();
+
 
 	void applyCommandLine();
 	void readApiFromCommandLine();

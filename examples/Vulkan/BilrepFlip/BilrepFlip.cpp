@@ -21,6 +21,7 @@
 #include "PVRCore/PVRCore.h"
 // enables the use of the PVRShell module which provides an abstract mechanism for the native platform primarily used for handling window creation and input handling.
 #include "PVRShell/PVRShell.h"
+#include "PVRShell/StateMachine.h"
 
 // STL C++ headers
 #include<map> 
@@ -52,6 +53,45 @@ struct SwapChainSupportDetails {
     std::vector<VkSurfaceFormatKHR> formats;
     std::vector<VkPresentModeKHR> presentModes;
 };
+
+void setCmdOptionListTests(pvr::Shell& shell, const char* arg, const char* val)
+{
+	Log(LogLevel::Information, "List of tests:");
+
+	std::vector<std::string> tests = { "test1", "test2", "test3" };
+	for (auto& test : tests)
+	{
+		Log(LogLevel::Information, test.c_str());
+	}
+
+	// AM: It's a dirty hack. Just to stop the StateMachine execution after this command.
+	// Unfortunately the StateMachine interface is not exposed to the this Shell class.
+	abort();
+}
+
+void setCmdOptionRunTest(pvr::Shell& shell, const char* arg, const char* val)
+{
+	Log(LogLevel::Information, "Run test:");
+
+	if (!strcasecmp(val, "test1"))
+	{
+		Log("Test1");
+	}
+
+	if (!strcasecmp(val, "test2"))
+	{
+		Log("Test2");
+	}
+
+	if (!strcasecmp(val, "test3"))
+	{
+		Log("Test3");
+	}
+
+	// AM: It's a dirty hack. Just to stop the StateMachine execution after this command.
+	// Unfortunately the StateMachine interface is not exposed to the this Shell class.
+}
+
 
 /// <summary>Map a VkDebugReportFlagsEXT variable to a corresponding log severity.</summary>
 /// <param name="flags">A set of VkDebugReportFlagsEXT specifying the type of event which triggered the callback.</param>
@@ -706,7 +746,7 @@ public:
 			_debugReportCallbacks[i] = VK_NULL_HANDLE;
 		}
 
-	}
+			}
 };
 
 
@@ -801,7 +841,6 @@ SwapChainSupportDetails VulkanIntroducingPVRShell::querySwapChainSupport(VkPhysi
 
         return indices;
     }
-
 
 /// <summary>Code in initApplication() will be called by Shell once per run, before the rendering context is created.
 /// Used to initialize variables that are not dependent on it(e.g.external modules, loading meshes, etc.).If the rendering
@@ -3589,4 +3628,11 @@ void VulkanIntroducingPVRShell::createSynchronisationPrimitives()
 
 /// <summary>This function must be implemented by the user of the shell. The user should return its pvr::Shell object defining the behaviour of the application.</summary>
 /// <returns>Return a unique ptr to the demo supplied by the user.</returns>
-std::unique_ptr<pvr::Shell> pvr::newDemo() { return std::make_unique<VulkanIntroducingPVRShell>(); }
+std::unique_ptr<pvr::Shell> pvr::newDemo()
+{
+	auto& cmdoptions = pvr::platform::getCommandLineOptions();
+	cmdoptions["-listtests"] = &setCmdOptionListTests;
+    cmdoptions["-test"] = &setCmdOptionRunTest;
+
+	return std::make_unique<VulkanIntroducingPVRShell>();
+}
