@@ -10,7 +10,7 @@ endif()
 
 find_package(Python3 REQUIRED)
 
-execute_process(COMMAND ${Python3_EXECUTABLE} update_glslang_sources.py WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/external/glslang/source 
+execute_process(COMMAND ${Python3_EXECUTABLE} update_glslang_sources.py WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/source 
 RESULT_VARIABLE UPDATE_GLSLANG_SRC_RESULT)
 
 if(NOT UPDATE_GLSLANG_SRC_RESULT EQUAL "0")
