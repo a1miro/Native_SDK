@@ -6,21 +6,10 @@ if(TARGET glslang)
 	return()
 endif()
 
-# Set some variables in the cache that control the build for GLSLang
-# We want to ensure that tests and external are turned off
-set(BUILD_TESTING OFF CACHE INTERNAL "Build GLSLang Tests")
-set(ENABLE_HLSL ON CACHE INTERNAL "Build GLSLang HLSL compiler")
-set(BUILD_EXTERNAL ON CACHE INTERNAL "Build GLSLang external")
 
-set(SPIRV_TOOLS_BUILD_STATIC ON CACHE BOOL "Enable SPIR-V static tools") 
-
-## The glslang relies on ENABLE_OPT=1 and will use external SPIR-V tools
-set(ENABLE_OPT OFF CACHE BOOL "Enable external SPIR-V tools in glslang")
 
 find_package(Python3 REQUIRED)
 
-## The glslang relies on ENABLE_OPT=0 and will use external SPIR-V tools
-set(ALLOW_EXTERNAL_SPIRV_TOOLS ON CACHE BOOL "Enable external SPIR-V tools")
 execute_process(COMMAND ${Python3_EXECUTABLE} update_glslang_sources.py WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/external/glslang/source 
 RESULT_VARIABLE UPDATE_GLSLANG_SRC_RESULT)
 
@@ -51,9 +40,7 @@ else()
 endif()
 
 # Add the glslang source into the build tree
-# message(FATAL_ERROR "${CMAKE_CURRENT_BINARY_DIR}/build")
-#add_subdirectory(source "${CMAKE_CURRENT_BINARY_DIR}/build")
-add_subdirectory(source)
+add_subdirectory(source "${CMAKE_CURRENT_BINARY_DIR}/build")
 
 # If the GLSLangValidator Binaries were not built as part of the host targetted build
 # Then we need to create an imported target which has a version of the binaries which 
@@ -61,3 +48,6 @@ add_subdirectory(source)
 if(NOT ${ENABLE_GLSLANG_BINARIES})
 	add_subdirectory(prebuilt)
 endif()
+
+# Set C++ Standard  
+set(CMAKE_CXX_STANDARD 20)

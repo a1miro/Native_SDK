@@ -11,8 +11,6 @@ if(TARGET PowerVR_SDK)
 	return()
 endif()
 
-# Set the C++ standard to C++20
-set(CMAKE_CXX_STANDARD 20)
 
 # Provides install directory variables to GNU standards
 include(GNUInstallDirs)
@@ -26,32 +24,12 @@ add_library(PowerVR_SDK INTERFACE)
 # Set default vakues for the options used by the SDK
 # These options configure which parts of the framework are built
 option(PVR_BUILD_FRAMEWORK_VULKAN "Build the Vulkan part of the framework" ON)
-option(PVR_BUILD_FRAMEWORK_GLES "Build the GLES part of the framework" ON)
-option(PVR_BUILD_FRAMEWORK_OPENCL "Build the OpenCL part of the framework" ON)
-option(PVR_BUILD_VULKAN_EXAMPLES "Build the Vulkan examples" ON)
-option(PVR_BUILD_OPENGLES_EXAMPLES "Build the GLES examples" ON)
-option(PVR_BUILD_OPENCL_EXAMPLES "Build the OpenCL examples" ON)
+option(PVR_BUILD_FRAMEWORK_GLES "Build the GLES part of the framework" OFF)
+option(PVR_BUILD_FRAMEWORK_OPENCL "Build the OpenCL part of the framework" OFF)
+option(PVR_BUILD_VULKAN_EXAMPLES "Build the Vulkan examples" OFF)
+option(PVR_BUILD_OPENGLES_EXAMPLES "Build the GLES examples" OFF)
+option(PVR_BUILD_OPENCL_EXAMPLES "Build the OpenCL examples" OFF)
 
-# If this cmake file isn't the top level one, then the SDK is being used in another project
-# And we can assume the user doesn't want to build the examples 
-get_directory_property(HAS_PARENT PARENT_DIRECTORY)
-if(HAS_PARENT)
-	option(PVR_BUILD_EXAMPLES "Build the PowerVR SDK Examples" OFF)
-else()
-	option(PVR_BUILD_EXAMPLES "Build the PowerVR SDK Examples" ON)
-endif()
-
-# Ensure that if the user wants to build the examples for a specific API
-# Then the corrosponding part of the framework would also be built
-if(PVR_BUILD_EXAMPLES)
-	if(PVR_BUILD_VULKAN_EXAMPLES)
-		option(PVR_BUILD_FRAMEWORK_VULKAN "Build the Vulkan part of the framework" ON)
-	endif()
-
-	if(PVR_BUILD_OPENGLES_EXAMPLES)
-		option(PVR_BUILD_FRAMEWORK_GLES "Build the GLES part of the framework" ON)
-	endif()
-endif()
 
 # Tell CMake where to find the SDK's cmake modules, ie when cmake calls find_package(*)
 # cmake needs to know where the SDK's custom scripts for this process are located
@@ -66,9 +44,12 @@ include(cmake/utilities/spirv.cmake)			# Provides add_spirv_shaders_to_target
 add_subdirectory(framework)
 
 # If the user has the examples option, then also add the examples source tree
-if(PVR_BUILD_EXAMPLES)
+if(PVR_BUILD_VULKAN_EXAMPLES OR PVR_BUILD_OPENGLES_EXAMPLES OR PVR_BUILD_OPENCL_EXAMPLES)
 	add_subdirectory(examples)
 endif()
 
 # Add in the PVR Scope Developer external target.
 add_subdirectory(external/PVRScope)
+
+# Set the C++ standard to C++20
+set(CMAKE_CXX_STANDARD 20)

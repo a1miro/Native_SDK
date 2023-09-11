@@ -70,7 +70,7 @@ function(apply_framework_compile_options_to_target THETARGET)
 
 	# The most important component to set is the C++ standard
 	# As of right now the SDK uses C++14 Standard
-	set(PVR_CXX_STANDARD 14)
+	set(PVR_CXX_STANDARD 20)
 
 	if(WIN32)
 		if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
