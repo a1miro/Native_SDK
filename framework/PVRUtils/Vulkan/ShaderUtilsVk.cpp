@@ -126,7 +126,7 @@ struct TBuiltInResourceInitialiser
 			/* .maxDualSourceDrawBuffersEXT = */ 1,
 
 			/* .limits = */
-			{
+			//{
 				/* .nonInductiveForLoops = */ 1,
 				/* .whileLoops = */ 1,
 				/* .doWhileLoops = */ 1,
@@ -136,7 +136,8 @@ struct TBuiltInResourceInitialiser
 				/* .generalSamplerIndexing = */ 1,
 				/* .generalVariableIndexing = */ 1,
 				/* .generalConstantMatrixVectorIndexing = */ 1,
-			} };
+			//},} 
+			};
 
 		// Initialise TBuiltInResource to a set of provided defaults
 		*tBuiltInResourcePtr = defaultTBuiltInResource;
