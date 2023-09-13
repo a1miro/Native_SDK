@@ -42,6 +42,9 @@ endif()
 # Add the glslang source into the build tree
 add_subdirectory(source "${CMAKE_CURRENT_BINARY_DIR}/build")
 
+# Add the glslang validator executable as cache variable
+set (GLSLANG_EXECUTABLE ${CMAKE_CURRENT_BINARY_DIR}/build/StandAlone/$<CONFIG>/glslang CACHE PATH "Path to glslang executable")
+
 # If the GLSLangValidator Binaries were not built as part of the host targetted build
 # Then we need to create an imported target which has a version of the binaries which 
 # Can be executed on the host system. This is handled in the prebuilt subdirectory
