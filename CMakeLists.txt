@@ -21,10 +21,6 @@ set(SDK_ROOT_INTERNAL_DIR ${CMAKE_CURRENT_LIST_DIR} CACHE INTERNAL "Path to the 
 # Make a top-level project file to build everything
 add_library(PowerVR_SDK INTERFACE)
 
-# set default PVR_WINDOW_SYSTEM to Screen on Windows
-if(WIN32)
-	set(PVR_WINDOW_SYSTEM "Screen" CACHE STRING "Window system to use")
-endif()
 # set default PVR_WINDOW_SYSTEM to X11 on Linux
 if(UNIX AND NOT APPLE)
 	set(PVR_WINDOW_SYSTEM "X11" CACHE STRING "Window system to use")
