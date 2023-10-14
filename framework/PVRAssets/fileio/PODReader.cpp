@@ -1011,7 +1011,7 @@ void readMeshBlock(const Stream& stream, assets::Mesh& mesh, assets::Model& mode
 		case pod::e_meshUVWList | pod::c_startTagMask:
 		{
 			char semantic[256];
-			sprintf(semantic, "UV%i", numUVWs++);
+			snprintf(semantic, 256, "UV%i", numUVWs++);
 			readVertexData(stream, mesh, semantic, identifier, interleavedDataIndex, exists);
 			break;
 		}

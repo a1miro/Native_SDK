@@ -11,7 +11,10 @@
 #include "PVRCore/stream/FilePath.h"
 #include "PVRCore/Log.h"
 
+#if defined(__linux__)
 #include <linux/input.h>
+#endif
+
 #include <unistd.h>
 #include <termios.h>
 #include <stdlib.h>
@@ -50,6 +53,7 @@ static void signalHandler(int sig, siginfo_t* si, void* ucontext)
 
 static void restoreTtyState()
 {
+	#if defined(__linux__)
 	// Reopen the tty so that we can restore the state
 	if (!TtyFileDescriptor)
 	{
@@ -58,6 +62,7 @@ static void restoreTtyState()
 
 	// Recover tty state.
 	if (tcsetattr(TtyFileDescriptor, TCSAFLUSH, &OriginalTermio) == -1) { Log(LogLevel::Error, "Unable to reset attributes for '%s'. Unable to recover the tty state", CONNAME); }
+	#endif
 }
 
 static void uninstallSignalHandlers()
@@ -136,7 +141,10 @@ InternalOS::InternalOS(ShellOS* shellOS) : _isInitialized(false), _shellOS(shell
 
 	// Attempt to open the tty (the terminal connected to standard input) as read/write
 	// Note that because O_NONBLOCK has been used termio.c_cc[VTIME] will be ignored so is not set
-	if ((TtyFileDescriptor = open(CONNAME, O_RDWR | O_NONBLOCK)) <= 0) { Log(LogLevel::Warning, "Unable to open '%s'", CONNAME); }
+	#if defined(__linux__)
+	if ((TtyFileDescriptor = open(CONNAME, O_RDWR | O_NONBLOCK)) <= 0) {
+		Log(LogLevel::Warning, "Unable to open '%s'", CONNAME);
+		}
 	else
 	{
 		// Reads the current set of terminal attributes to the struct
@@ -170,6 +178,7 @@ InternalOS::InternalOS(ShellOS* shellOS) : _isInitialized(false), _shellOS(shell
 
 		Log(LogLevel::Information, "Opened '%s' for input", CONNAME);
 	}
+	#endif
 
 	// Restore the terminal console on SIGINT, SIGSEGV and SIGABRT
 	installSignalHandler();

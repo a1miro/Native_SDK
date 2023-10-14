@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.18.0 FATAL_ERROR)
 project(PowerVR_SDK)
 
-# Ensure we are not building for apple targets 
+# Ensure we are not building for apple targets
 if(APPLE OR IOS)
-	message(FATAL_ERROR "Sorry, the PowerVR SDK is no longer supported on Apple devices")
+#	message(FATAL_ERROR "Sorry, the PowerVR SDK is no longer supported on Apple devices")
 endif()
 
 # Avoids the SDK target being added multiple times
