@@ -42,7 +42,7 @@
 #define NOMINMAX
 #endif
 #include <Windows.h>
-#define vsnprintf _vsnprintf
+//#define vsnprintf _vsnprintf
 #endif
 
 #if defined(__linux__)
